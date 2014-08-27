@@ -11,6 +11,11 @@
 using namespace std;
 
 
+//Variáveis globais utilizadas para controle das tranformações.
+//Usados para translação.
+GLfloat	xAxisTranslade = 0.0;
+GLfloat yAxisTranslade = 0.0;
+
 GLfloat gfPosx = 0.0;
 GLfloat	deltaX = .0001;
 
@@ -80,21 +85,6 @@ class Objeto{
 			Vertice* v = new Vertice(cx/vertices->size(),cy/vertices->size());
 			return *v;
 		}
-		
-		void moveXAxis(){
-			for(int i = 0; i < vertices->size(); i++){
-				Vertice* v= this->vertices->at(i);
-				
-				if (v->getX() <= 0)
-					v->setX(1);
-				else if (v->getX() >= 1)
-					v->setX(0);
-					
-				v->setX(v->getX()+deltaX);
-				
-			}	
-		}
-
 };
 
 class Casa : public Objeto{
@@ -111,51 +101,31 @@ class Casa : public Objeto{
 	
 };
 
-Casa* casa = new Casa();
-void draw() { 
-	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f(1.0, 1.0, 1.0);
-	glMatrixMode(GL_MODELVIEW);
-	
-	casa->draw();
-	
-	glFlush();
-	
-	glutPostRedisplay();
-} 
-
-void Initialize() {
-	glClearColor(0.0, 0.0, 0.0, 0.0);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluOrtho2D(-250.0f, 250.0f, -250.0f, 250.0f);
-}
 
 
 
+//Função que recebe comandos do teclado.
 void keyPressed(unsigned char key, int x, int y){
 	
-	cout << "pressed: " << key << endl;
+	cout << "Pressed: " << key << endl;
 	
 	
 	if(key == 'w'){
-		glTranslatef(0.000f, 10.0f, 0.0f);
-		
-		
+		yAxisTranslade += 10;
 	}
 	else if(key == 's'){
-		glTranslatef(0.000f, -10.0f, 0.0f);
+		yAxisTranslade -= 10;
 	}
 	
 	else if(key == 'a'){
-		glTranslatef(-10.0f, 0.00f, 0.0f);
+		xAxisTranslade -= 10;
 	}
 	
 	else if(key == 'd'){
-		glTranslatef(10.0f, 0.00f, 0.0f);
+		xAxisTranslade += 10;
 	}
 	
+	/*
 	else if(key == 'q'){
 		glPushMatrix();
 		rotationAngle -= 1.0f;
@@ -206,10 +176,11 @@ void keyPressed(unsigned char key, int x, int y){
 		Vertice v = casa->getCentroide();
 	}
 	glutPostRedisplay();
+	*/
 }
 
 // Função callback chamada quando o tamanho da janela é alterado 
-void AlteraTamanhoJanela(GLsizei w, GLsizei h)
+void resizeWindow(GLsizei w, GLsizei h)
 {
                    // Evita a divisao por zero
                    if(h == 0) h = 1;
@@ -228,10 +199,26 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
                            gluOrtho2D(0.0f, 250.0f*w/h, 0.0f, 250.0f);
 }
 
-void Timer(int iUnused)
-{
-    glutPostRedisplay();
-    glutTimerFunc(30, Timer, 0);
+Casa* casa = new Casa();
+void draw() { 
+	glClear(GL_COLOR_BUFFER_BIT);
+	glColor3f(1.0, 1.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
+	
+	casa->draw();
+	glTranslatef(xAxisTranslade,yAxisTranslade,0.0f);
+	
+	glFlush();
+	
+	glutPostRedisplay();
+} 
+
+void Initialize() {
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluOrtho2D(-250.0f, 250.0f, -250.0f, 250.0f);
 }
 
 int main(int argc, char** argv) { 
@@ -243,10 +230,9 @@ int main(int argc, char** argv) {
 	
 	Initialize();
 	
-	glutReshapeFunc(AlteraTamanhoJanela);
+	glutReshapeFunc(resizeWindow);
 	glutDisplayFunc(draw);
 	glutKeyboardFunc(keyPressed);
-	Timer(0);
 	glutMainLoop(); 
 	return 0; 
 }

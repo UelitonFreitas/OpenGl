@@ -16,21 +16,21 @@ void display(void){
   glRotatef ((GLfloat) shoulder, 0.0, 0.0, 1.0);
 
   /* origem posicionada no centro do braço */ 
-  glTranslatef (1.0, 0.0, 0.0);
-  glPushMatrix();
-  glScalef (2.0, 0.4, 1.0);
-  glutWireCube (1.0);
-  glPopMatrix();
+  //glTranslatef (1.0, 0.0, 0.0);
+ // glPushMatrix();
+ // glScalef (2.0, 0.4, 1.0);
+ // glutWireCube (1.0);
+  //glPopMatrix();
    
   /* origem posicionada no cotovelo */
   glTranslatef (1.0, 0.0, 0.0);
   glRotatef ((GLfloat) elbow, 0.0, 0.0, 1.0);
   glTranslatef (1.0, 0.0, 0.0);
   
-  glPushMatrix();
-  glScalef (2.0, 0.4, 1.0);
-  glutWireCube (1.0);
-  glPopMatrix();
+  //glPushMatrix();
+  //glScalef (2.0, 0.4, 1.0);
+  //glutWireCube (1.0);
+  //glPopMatrix();
 
   /* origem volta para o sistema de coordenadas original */
   glPopMatrix();
