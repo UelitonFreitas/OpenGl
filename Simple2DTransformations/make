@@ -1,0 +1,19 @@
+# Compila programas do curso de OpenGL no ambiente Linux
+# Substitua nome_do_programa pelo nome do programa ...
+# ...que se está trabalhando
+#
+# Antes das linhas que contém "gcc...", não pode haver espaço em
+# branco e sim uma marca de tabulação
+#
+# CESET, 2005, Prof. Marco Antonio
+#
+
+# Variables
+LIBS	=	-lglut -lGL -lGLU
+CFLAGS	=	$(INCPATH)	-g
+LFLAGS	=	$(LIBPATH) $(LIBS)
+
+# Main targets
+nome_do_programa: nome_do_programa.o	gpp -o main main.o $(LFLAGS)	
+#Source	targets
+nome_do_programa.o: nome_do_programa.c	gpp -c main.cpp $(CFLAGS)
