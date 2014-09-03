@@ -29,10 +29,13 @@ int xyScale = 1;
 class Vertice{
 	
 	private:
+		//Coordenada da posição x.
 		double x;
+		//Coordenada da posição y.
 		double y;
 
 	public:
+		//Construtor.
 		Vertice(double x, double y){
 			this->x = x;
 			this->y = y;
@@ -57,14 +60,15 @@ class Vertice{
 };
 
 //A modelagem de um objeto qualquer.
-// Todo objeto deve coner um conjunto de vértices que o compõe, assim como saber desenhar ele mesmo.
+// Todo objeto conhece seu conjunto de vértices, assim como se desenhar.
 class Objeto{
 	protected:
+		//Lista de vértices.
 		vector<Vertice*>* vertices;
 
 	public:
 		Objeto(){
-			//Lista de vértices.
+			//Cria lista de vértices.
 			vertices = new vector<Vertice*>();
 		}
 		
@@ -78,8 +82,8 @@ class Objeto{
 			glEnd();
 		}
 		
-		//Calcula o centroid do objeto.
-		//O centroid é utilizado para efeturar as operações de rotação e escalas de maneira correta.
+		//Calcula o centroide do objeto.
+		//O centroid é utilizado para efeturar as operações de rotação e escalas de maneira correta, isto é, sem deslocar o objeto.
 		Vertice& getCentroide(){
 			double cx = 0.0;
 			double cy = 0.0;
@@ -164,7 +168,7 @@ void keyboard(unsigned char key, int x, int y){
 			glutPostRedisplay();
 			break;
 		
-		//Retorna o objeto em sua forma original.
+		//Retorna o objeto em sua escala original.
 		case 'o':
 			xyScale = 1;
 			glutPostRedisplay();
@@ -181,33 +185,51 @@ void keyboard(unsigned char key, int x, int y){
 	
 }
 
+//Algumas funções de inicialização do OpenGL.
 void init(void){
+	//Cor de fundo da janela.
 	glClearColor (0.0, 0.0, 0.0, 0.0);
 }
 
+//Instância um objeto Casa.
 Casa* casa = new Casa();
+
+//Função resposável pelas transformações das imagens.
+//Lembrando que as operações de matrizes nesta função são efetuadas de tráz para frente.
 void display(void){
 	glClear (GL_COLOR_BUFFER_BIT);
+	
+	//Insere a matriz original na pilha. Isto é feito para garantir a integridade do sistema de coordenadas.
 	glPushMatrix();
       
 	 /* origem posicionada no centro do braço */ 
 	glTranslatef (xAxisTranslade, yAxisTranslade, 0.0);
 	
+	//v é o centroid do objeto Casa.
 	Vertice v = casa->getCentroide();
 	
+	//Salva matriz atual na pilha para manter a integridade do sistema de coordenadas.
 	glPushMatrix();
+		//Translada objeto de volata a posição original.
 		glTranslatef (v.getX(), v.getY(), 0.0);
+		//Rotaciona o objeto.
 		glRotatef ((GLfloat) theta, 0.0, 0.0, 1.0);
+		//Efetua a escala no objeto.
 		glScalef(xyScale,xyScale,0.0f);
+		//Translada o objeto para a origem do plano.
 		glTranslatef (-v.getX(), -v.getY(), 0.0);
+		//Executa o método responsável por desenhar o objeto.
 		casa->draw();
+	//Pega a matriz original do topo da pilha.
 	glPopMatrix();
 	
 	/* origem volta para o sistema de coordenadas original */
 	glPopMatrix();
+	//Reinicia o desenho da imagem.
 	glutSwapBuffers();
 }
 
+//Função responsável pela mudança no tamanho da janela de projeção.
 void reshape (int w, int h){
 	glViewport (0, 0, (GLsizei) w, (GLsizei) h);
 	glMatrixMode (GL_PROJECTION);
@@ -218,6 +240,7 @@ void reshape (int w, int h){
 	glTranslatef (0.0, 0.0, -5.0);
 }
 
+//Main do programa.
 int main(int argc, char** argv){
 	glutInit(&argc, argv);
 	glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB);
