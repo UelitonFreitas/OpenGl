@@ -203,13 +203,13 @@ void display(void){
 	glPushMatrix();
       
 	 /* origem posicionada no centro do braço */ 
-	glTranslatef (xAxisTranslade, yAxisTranslade, 0.0);
+	
 	
 	//v é o centroid do objeto Casa.
 	Vertice v = casa->getCentroide();
-	
 	//Salva matriz atual na pilha para manter a integridade do sistema de coordenadas.
 	glPushMatrix();
+		glTranslatef (xAxisTranslade, yAxisTranslade, 0.0);
 		//Translada objeto de volata a posição original.
 		glTranslatef (v.getX(), v.getY(), 0.0);
 		//Rotaciona o objeto.
@@ -222,7 +222,7 @@ void display(void){
 		casa->draw();
 	//Pega a matriz original do topo da pilha.
 	glPopMatrix();
-	
+	casa->draw();
 	/* origem volta para o sistema de coordenadas original */
 	glPopMatrix();
 	//Reinicia o desenho da imagem.
