@@ -16,6 +16,17 @@ GLint raioEsfera=1.5;
 GLfloat obs[3]={0.0,7.0,0.0};
 GLfloat olho[3]={0.0,3.0,0.0};
 
+/*Define os coeficientes de reflexão difusa (*_difusa) e especular (*_especular)
+para os objetos da cena.
+
+As componentes são do tipo R, G, B e A (alfa) que definem as cores do plano, esfera A
+e esfera B.
+A esfera B possui um valor alto de A para compor sua transparência (aparência translúcida).
+
+O brilho do material pode assumir valores entre 1 e 128, que corresponde ao espoente que
+modela a função de distribuição espacial da componente de luz refletida especularmente.
+A medida em que o valor do brilho aumenta, diminui-se o espelhamento da luz refletida.
+*/
 GLfloat plano_difusa[]    = { 0.5, 0.5, 0.0, 1.0 };
 GLfloat plano_especular[] = { 1.0, 1.0, 1.0, 1.0 };
 GLfloat plano_brilho[]    = { 50.0 };
@@ -28,6 +39,9 @@ GLfloat mat_b_difusa[]    = { 0.7, 0.7, 0.7, 0.5 };
 GLfloat mat_b_especular[] = { 1.0, 1.0, 1.0, 0.5 };
 GLfloat mat_b_brilho[]    = { 50.0 };
 
+/* Define a posição e as componentes de luz para reflexão difusa e especular (cor_luz0)
+e a componente de luz para reflexão ambiente (cor_luz0_amb).
+*/
 GLfloat posicao_luz0[]    = { 0.0, 10.0, 0.0, 1.0};
 GLfloat cor_luz0[]        = { 1.0, 1.0, 1.0, 1.0};
 GLfloat cor_luz0_amb[]    = { 0.3, 0.3, 0.3, 1.0};
@@ -39,15 +53,21 @@ GLint gouraud=0;
 GLfloat tetaxz=0;
 GLfloat raioxz=6;
 
+
+/* Redimensiona a janela */
 void reshape(int width, int height){
   WIDTH=width;
   HEIGHT=height;
+  /*ViewPort*/
   glViewport(0,0,(GLint)width,(GLint)height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
+  /*Visão perspectiva*/
   gluPerspective(70.0,width/(float)height,0.1,30.0);
   glMatrixMode(GL_MODELVIEW);
 }
+
+
 
 void display(void){
   glEnable(GL_DEPTH_TEST);
@@ -57,6 +77,11 @@ void display(void){
   glClearColor(1.0,1.0,1.0,1.0);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
+
+  /* A variável gouraud, utilizando a função display, decide o modelo de sombreamento (shading)
+  para os objetos. Caso a variável gouraud sja setada o sombreamento que será utilizado será o
+  Gouraund(GL_SMOOTH) e flat_shading caso contrário.
+  */
   if(gouraud){
     glShadeModel(GL_SMOOTH);
   }
@@ -71,12 +96,17 @@ void display(void){
   obs[2]=raioxz*sin(2*PI*tetaxz/360);
   gluLookAt(obs[0],obs[1],obs[2],olho[0],olho[1],olho[2],0.0,1.0,0.0);
   
-  /* propriedades do material do plano */
+  /* propriedades do material do plano 
+  A função glMaterialfv() define as propriedades da reflexão difusa, especular e brilho do mateiral
+  que irá compor o objeto, neste caso é um plano*/
   glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, plano_difusa);
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, plano_especular);
   glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, plano_brilho);
   
   /* desenha o plano */
+  /* A função glNormal3f() define a orientação da normal do desenho. Por padrão a normal encontra-se
+  na direção (x,y,z) = (0,0,1), assim para que a mesma esteja orientada junto ao plano, a função glNormal3f()
+  orienta a normal no eixo y*/
   glNormal3f(0,1,0); 
   glBegin(GL_QUADS);
   glVertex3f(-10,0,10);
@@ -85,6 +115,8 @@ void display(void){
   glVertex3f(-10,0,-10);
   glEnd();
 
+  /*No OpenGL as fontes de luz não são visíveis, sendo assim, uma espfera foi definida para representar
+  a fonte a luz. Na chamada da função glMaterialfv() o parâmetro GL_EMISSION define a intensidade emitida pelo material como sendo a própria fonte de luz, dando a aparência de que a esfera brilha, como uma lâmpada.*/
   glPushMatrix();
   glTranslatef(posicao_luz0[0],posicao_luz0[1],posicao_luz0[2]);
   glMaterialfv(GL_FRONT, GL_EMISSION, cor_luz0);
@@ -153,25 +185,6 @@ void keyboard(unsigned char key, int x, int y){
       raioxz=raioxz-1;
       glutPostRedisplay();
     }
-  case 'q':
-    mat_a_especular[0]=mat_a_especular[1]=mat_a_especular[2]=0.0;
-    break;
-  case 'w': 
-    mat_a_especular[0]=mat_a_especular[1]=mat_a_especular[2]=0.5;
-    break;
-  case 2:
-    mat_a_especular[0]=mat_a_especular[1]=mat_a_especular[2]=1.0;
-    break;
-  case 3:
-    mat_a_difusa[0]=mat_a_difusa[1]=mat_a_difusa[2]=0.0;
-    break;
-  case 4: 
-    mat_a_difusa[0]=mat_a_difusa[1]=mat_a_difusa[2]=0.5;
-    break;
-  case 5:
-    mat_a_difusa[0]=mat_a_difusa[1]=mat_a_difusa[2]=1.0;
-    break;
-    break;
   }
 }
 
@@ -179,9 +192,13 @@ void keyboard(unsigned char key, int x, int y){
 void init(){
   gouraud=1;
   glEnable(GL_DEPTH_TEST);
+  /*Habilita a composição blending das imagens dos valores RGBA correntes com os do framebuffer. A função
+  glBlendFunc() de os pesos para a imagem que está sendo processada e a presente no framebuffer. Neste caso,
+  os pesos são o próprio valor do canal alfa (GL_SRC_ALPHA) e 1-alfa (GL_ONE_MINUS_SRC_ALPHA).*/
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
+  /*Define a posição dos componentes de cor da fonte de luz GL_LIGHT0*/
   glLightfv(GL_LIGHT0, GL_DIFFUSE, cor_luz0);
   glLightfv(GL_LIGHT0, GL_SPECULAR, cor_luz0);
   glLightfv(GL_LIGHT0, GL_AMBIENT, cor_luz0_amb);
@@ -194,6 +211,7 @@ void init(){
   glEnable(GL_NORMALIZE);
 }
 
+/*A função menu é ativada quando o botão direito do mouse é pressionado. De acordo com a variável volume, determinadas propriedades do material que compõe a esfera A são modificadas.*/
 void menu(int value){
   switch (value) {
   case 0:
@@ -239,6 +257,7 @@ int main(int argc,char **argv){
   glutDisplayFunc(display);
   glutReshapeFunc(reshape);
 
+  /*A função createMenu() em conjunto com a função glutAddMenuEntry habilitam um menu popup. A função glutAttachMenu() associa o aparecimento do menu com o código pressionado para executar uma determinada operação.*/
   glutCreateMenu(menu);
   glutAddMenuEntry("-sem spec", 0);
   glutAddMenuEntry("-spec media", 1);
