@@ -20,45 +20,13 @@ void display(void)
    glColor3f (1.0, 1.0, 1.0);
 
 /* in 1st row, 3 lines, each with a different stipple  */
-   glEnable (GL_LINE_STIPPLE);
+   glBegin(GL_POLYGON);
+	glVertex2i(100,100);
+	glVertex2i(200,100);
+	glVertex2i(200,200);
+	glVertex2i(100,200);
+   glEnd();
    
-   glLineStipple (1, 0x0101);  /*  dotted  */
-   drawOneLine (50.0, 125.0, 150.0, 125.0);
-   glLineStipple (1, 0x00FF);  /*  dashed  */
-   drawOneLine (150.0, 125.0, 250.0, 125.0);
-   glLineStipple (1, 0x1C47);  /*  dash/dot/dash  */
-   drawOneLine (250.0, 125.0, 350.0, 125.0);
-
-/* in 2nd row, 3 wide lines, each with different stipple */
-   glLineWidth (5.0);
-   glLineStipple (1, 0x0101);  /*  dotted  */
-   drawOneLine (50.0, 100.0, 150.0, 100.0);
-   glLineStipple (1, 0x00FF);  /*  dashed  */
-   drawOneLine (150.0, 100.0, 250.0, 100.0);
-   glLineStipple (1, 0x1C47);  /*  dash/dot/dash  */
-   drawOneLine (250.0, 100.0, 350.0, 100.0);
-   glLineWidth (1.0);
-
-/* in 3rd row, 6 lines, with dash/dot/dash stipple  */
-/* as part of a single connected line strip         */
-   glLineStipple (1, 0x1C47);  /*  dash/dot/dash  */
-   glBegin (GL_LINE_STRIP);
-   for (i = 0; i < 7; i++)
-      glVertex2f (50.0 + ((GLfloat) i * 50.0), 75.0);
-   glEnd ();
-
-/* in 4th row, 6 independent lines with same stipple  */
-   for (i = 0; i < 6; i++) {
-      drawOneLine (50.0 + ((GLfloat) i * 50.0), 50.0,
-         50.0 + ((GLfloat)(i+1) * 50.0), 50.0);
-   }
-
-/* in 5th row, 1 line, with dash/dot/dash stipple    */
-/* and a stipple repeat factor of 5                  */
-   glLineStipple (5, 0x1C47);  /*  dash/dot/dash  */
-   drawOneLine (50.0, 25.0, 350.0, 25.0);
-
-   glDisable (GL_LINE_STIPPLE);
    glFlush ();
 }
 

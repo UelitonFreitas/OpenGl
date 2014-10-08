@@ -2,7 +2,7 @@
 #include <GL/glut.h>
 #include <stdlib.h>
 
-static int shoulder = 0, elbow = 0;
+static int shoulder = 0, elbow = 0, claw = 0;
 
 void init(void){
   glClearColor (0.0, 0.0, 0.0, 0.0);
@@ -31,6 +31,25 @@ void display(void){
   glScalef (2.0, 0.4, 1.0);
   glutWireCube (1.0);
   glPopMatrix();
+  
+  /* origens posicionadas nas garras */
+  glTranslatef(1.0, 0.0, 0.0);
+    
+  glPushMatrix();
+  glRotatef ((GLfloat) claw, 0.0, 0.0, 1.0);
+  glTranslatef(0.5,0.2,0.0);
+  glScalef(1,0.2,0.5);
+  glutWireCube(1);
+  glPopMatrix();
+  
+  glPushMatrix();
+  glRotatef ((GLfloat) -claw, 0.0, 0.0, 1.0);
+  glTranslatef(0.5,-0.2,0.0);
+  glScalef(1,0.2,0.5);
+  glutWireCube(1.0);
+  glPopMatrix();
+
+  
 
   /* origem volta para o sistema de coordenadas original */
   glPopMatrix();
@@ -65,6 +84,14 @@ void keyboard (unsigned char key, int x, int y){
     elbow = (elbow - 5) % 360;
     glutPostRedisplay();
     break;
+  case 'z':
+    claw = (claw - 5) % 360;
+    glutPostRedisplay();
+    break;
+  case 'c':
+    claw = (claw + 5) % 360;
+    glutPostRedisplay();
+    break;
   case 27:
     exit(0);
     break;
@@ -76,8 +103,8 @@ void keyboard (unsigned char key, int x, int y){
 int main(int argc, char** argv){
   glutInit(&argc, argv);
   glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB);
-  glutInitWindowSize (500, 500); 
-  glutInitWindowPosition (100, 100);
+  glutInitWindowSize (800, 800); 
+  glutInitWindowPosition (200, 200);
   glutCreateWindow (argv[0]);
   init ();
   glutDisplayFunc(display); 
