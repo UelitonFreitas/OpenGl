@@ -1,88 +1,323 @@
 
-#include <GL/glut.h>
+//[]----------------------------------------------------[]
+//|
+//| 	trabalho pratico - 1 parte
+//|			Computacao Grafica
+//| 
+//|			aluno: Ricardo Barbosa Porto
+//|				 e Ueliton Freitas
+//| 
+//[]----------------------------------------------------[]
+
+	/* arquivoprincipal.cpp */
+
+/*
+ *
+	cena possui
+		2 fontes de luz
+		3 poligonos ( piramide , esfera , cubo )
+		1 espelho
+		1 vidro
+ *  
+	Operacoes basicas de openGL
+		. movimento mouse:	rotacao
+		. seta cima:		avanca  (-z)
+		. seta baixo:		retorna (+z)
+		. seta esquerda:	desloca esquerda (-x)
+		. seta direita:		desloca direita  (+x)
+		. page Up:			desloca cima (+y)
+		. page Down:		desloca baixo(-y)
+		. barra spaço:		alterna entre difuso / especular
+		. F5 :				alterna entre ortogonal / perpectiva
+		. F11:				tela chei
+		. f12:				modo janela
+ *
+ */
+
 #include <stdlib.h>
+#include <stdio.h>
+#include <GL/glut.h>
 
-static int shoulder = 0, elbow = 0;
+#ifndef __primitives_h
+#include "primitives.h"
+#endif
 
-void init(void){
-  glClearColor (0.0, 0.0, 0.0, 0.0);
+#define ESCAPE 27					/* ascii code for the escape key */
+#define WIDTH 640					/* width size of window */
+#define HEIGHT 480					/* height size of window */
+
+int			window;					/* The number of our GLUT window */
+GLfloat		_width;					/* Width active of window */
+GLfloat		_height;				/* Height active of window */
+
+bool		grade		= false;	// Desenhar grid ?
+bool		ortogonal	= false;	// projecao ortogonal ou perspectiva
+bool		especular	= true;		// habilitar reflexao especularidade / difusa
+
+/* Definicao de vetores contendo dados de cor, intensidade e pos. de fontes de luz.*/
+GLfloat		luzAmbiente[4]	= { 0.2, 0.2, 0.2, 1.0 }; 
+GLfloat		luzDifusa[4]	= { 0.7, 0.7, 0.7, 1.0 };		// "cor" 
+GLfloat		luzEspecular[4]	= { 1.0, 1.0, 1.0, 1.0 };		// "brilho" 
+GLfloat		posicaoLuz[4]	= { 0.0, 50.0, 50.0, 1.0 };
+
+GLfloat		especularidade[4] = { 1.0, 1.0, 1.0, 1.0};		// Capacidade de brilho do material
+GLint		especMaterial	= 60;
+
+float angle = 45;
+int posx=10 , posy=40 , posz=40;	// var que definem a pos camera
+int eyex=0 , eyey=0 , eyez=0;		// var definem onde camera olha
+int lx=0, ly=1,  lz=0;				// var definem qual eixo estara na vertical do monitor.
+
+int		camRot = 0;
+int		rotAng=0 , rotX=0 , rotY=0 , rotZ=0;		// rotaciona
+int		zoom = 0;					//zoom da imagem.
+
+void desenhaMundo()										// e' aqui que desenhamos TUDO
+{
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );	// limpa tela e o buffer
+	glLoadIdentity();
+	
+		glRotatef( rotAng , rotX,rotY,rotZ );
+	
+		
+	/*  funcoes que desenham algo */
+	//grid
+	GLfloat size = 50;
+	GLint LinesX = 30;
+	GLint LinesZ = 30;
+	
+	glPushMatrix();
+		glColor3f( 1,0,0 );
+		Grid( size , LinesX,LinesZ );
+
+		glRotatef( 90 , 0,0,0);
+		Grid( size , LinesX,LinesZ );
+	glPopMatrix();
+	// end grid
+	/*
+	drawObjects();
+	drawMirror();
+	*/
+	
+	/*  realiza reflexao  (espelho)  */
+	double eqr[] = { -10.0f, 0.0f, 0.0f, 0.0f };		// Plane Equation To Use For The Reflected Objects
+	glColorMask( 0,0,0,0 );								// Set Color Mask
+	glEnable(GL_STENCIL_TEST);							// Enable Stencil Buffer For mirror
+	glStencilFunc(GL_ALWAYS, 1, 1);						// Always Passes, 1 Bit Plane, 1 As Mask
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);			// We Set The Stencil Buffer To 1 Where We Draw Any Polygon
+	
+	glDisable(GL_DEPTH_TEST);							// Disable Depth Testing
+	drawMirror();
+	
+	glEnable(GL_DEPTH_TEST);							// Enable Depth Testing
+	glColorMask( 1,1,1,1 );
+	glStencilFunc(GL_EQUAL, 1, 1);						// We Draw Only Where The Floor Was Drawn
+
+	glStencilOp( GL_KEEP, GL_KEEP, GL_KEEP );			// Don't Change The Stencil Buffer
+	glEnable(GL_CLIP_PLANE0);							// Enable Clip Plane For Removing Artifacts
+	glClipPlane(GL_CLIP_PLANE0, eqr);					// Equation For Reflected Objects
+	glPushMatrix();										// Push The Matrix Onto The Stack
+		glScalef( -1.0f, 1.0f, 1.0f );					// Mirror Z Axis
+		drawObjects();									// Draw The Sphere (Reflection)
+	glPopMatrix();										// Pop The Matrix Off The Stack
+	glDisable(GL_CLIP_PLANE0);							// Disable Clip Plane For Drawing The Floor
+	glDisable(GL_STENCIL_TEST);							// We Don't Need The Stencil Buffer Any More (Disable)
+	glColor4f( 0.5,0.5,0.5, 0.8f );
+	drawMirror();										// Draw The Floor To The Screen
+	glEnable(GL_DEPTH_TEST);							// Disable Depth Testing
+	drawObjects();
+
+	glFlush();
+	glutSwapBuffers();								// troca os buffers.
 }
 
-void display(void){
-  glClear (GL_COLOR_BUFFER_BIT);
-  glPushMatrix();
+void initGL() 
+{
+	glClearColor( 0.0f,0.0f,0.0f , 1.0f );					// fundo negro
 
-  /* origem posicionada no ombro */
-  glTranslatef (-1.0, 0.0, 0.0);
-  glRotatef ((GLfloat) shoulder, 0.0, 0.0, 1.0);
+	glEnable( GL_BLEND );									// habilita transparencia
+	glBlendFunc( GL_SRC_ALPHA , GL_ONE_MINUS_SRC_ALPHA );	// GL_SRC_ALPHA refere ao objeto da frente (tomando como referência o observador). 
+															// GL_ONE_MINUS_SRC_ALPHA define que o objeto mais próximo será responsável por uma fraçao igual ao quarto argumento do glColor no cálculo total das cores
+	glClearDepth(1.0f);										// inicializa Depth Buffer
+	glClearStencil(0);
+	glDepthFunc( GL_LEQUAL );								// define teste de profundidade vai ser feito
+	glEnable( GL_DEPTH_TEST );								// habilita teste de profundidade
+	glShadeModel( GL_SMOOTH );								// habilita sombreamento suavizado .. degrade
 
-  /* origem posicionada no centro do braço */ 
-  glTranslatef (1.0, 0.0, 0.0);
-  glPushMatrix();
-  glScalef (2.0, 0.4, 1.0);
-  glutWireCube (1.0);
-  glPopMatrix();
+	glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );	// calculo de perspectiva .. através da constante GL_NICEST
+	
+	glMaterialfv(	GL_FRONT,GL_SPECULAR  , especularidade	);		// Define a refletância do material
+	glMateriali(	GL_FRONT,GL_SHININESS , especMaterial	);		// Define a concentração do brilho
+	glLightModelfv(	GL_LIGHT_MODEL_AMBIENT, luzAmbiente		);		// Ativa o uso da luz ambiente 
+	
+	glLightfv(GL_LIGHT0, GL_AMBIENT, luzAmbiente);			// parametros: lampada(0)
+	glLightfv(GL_LIGHT0, GL_POSITION, posicaoLuz );			// parametros: lampada(0)
+	glLightfv(GL_LIGHT1, GL_AMBIENT, luzAmbiente);			// parametros: lampada(1)
+
+	glEnable(GL_COLOR_MATERIAL);							// habilita a definição da cor do material a partir da cor corrente
+	glEnable(GL_LIGHTING);									// Habilita o uso de iluminação
+	glEnable(GL_LIGHT0);									// Habilita a luz de número 0
+	glEnable(GL_LIGHT1);									// Habilita a luz de número 1
+}
+
+void parametrosReflexao( GLenum light )
+{
+	for( int i=0 ; i < 4 ; i++ )
+	{
+		luzEspecular[i]	= especular;
+		luzDifusa[i]	= !especular;
+	}
+
+	glLightfv( light, GL_DIFFUSE, luzDifusa );			// parametros: lampada(0)
+	glLightfv( light, GL_SPECULAR, luzEspecular );		// parametros: lampada(0)
+
+}
+
+void parametrosVisualizacao()
+{
+	parametrosReflexao( GL_LIGHT0 );
+	parametrosReflexao( GL_LIGHT1 );
+
+	GLfloat posLuzCamera[] = { posx, posy, posz, 1 };
+	glLightfv(GL_LIGHT1, GL_POSITION, posLuzCamera );	// parametros: lampada(1)
+
+
+    glMatrixMode( GL_PROJECTION );
+    glLoadIdentity();
+	
+	if( ortogonal )
+		glOrtho( -100, 100, -100, 100, -1000.0, 1000.0 );
+	else
+		gluPerspective( angle, _width/_height, 1, 1000 );
+
+	gluLookAt( posx,posy,posz, eyex,eyey,eyez, lx,ly,lz );	// define pos da camera, para onde olha e qual eixo esta' na vertical
+		
+	glMatrixMode( GL_MODELVIEW  );
+    glLoadIdentity();
+}
+
+void redimensionaJanela( int width=WIDTH , int height=HEIGHT )		// resize window
+{
+	_width  = width;
+	_height = height ? height : 1;
+
+    glViewport( 0, 0, width, height );
+
+	parametrosVisualizacao();
+}
+
+void tecla( unsigned char key , int x,int y )
+{
+	switch( key ) 
+	{
+	case 32:							// SPACE
+		especular = !especular;
+		break;
+
+    case ESCAPE:						// ESC
+		glutDestroyWindow(window);
+		exit(0);
+
+    default:	return;
+	}
+	
+	parametrosVisualizacao();
+	glutPostRedisplay();
+}
+
+void teclas_especiais ( int key , int x,int y )
+{
+	switch( key ) 
+	{
+	case GLUT_KEY_UP:     posz-=5; eyez-=5; break;
+	case GLUT_KEY_DOWN:   posz+=5; eyez+=5; break;
+	case GLUT_KEY_RIGHT:  posx+=5; eyex+=5; break;
+	case GLUT_KEY_LEFT:   posx-=5; eyex-=5; break;
+
+	case GLUT_KEY_PAGE_UP:		posy+=5; eyey+=5; break;
+	case GLUT_KEY_PAGE_DOWN:	posy-=5; eyey-=5; break;
+
+	case 1: // F1
+			grade = !grade;
+			glutPostRedisplay();
+			break;
+
+	case 5: ortogonal = !ortogonal;					// F5
+	case 12: // F12
+			glutReshapeWindow ( WIDTH , HEIGHT );	// modo em janela
+			return;
+	
+	case 11: // F11
+			glutFullScreen();						// modo tela cheia
+			return;
+	
+	default:	printf( "Teclaram: %d\n", key ); return;
+	}
+	
+	parametrosVisualizacao();
+	glutPostRedisplay();
+}
+
+void mouse( int x, int y )
+{
+	if( y < (HEIGHT/2) )
+	{
+		rotX = x;
+		rotY = y;
+		rotAng += 1;
+
+   } else {
+	   rotX = x;
+	   rotY = y;
+	   rotAng -= 1;
+   }
    
-  /* origem posicionada no cotovelo */
-  glTranslatef (1.0, 0.0, 0.0);
-  glRotatef ((GLfloat) elbow, 0.0, 0.0, 1.0);
-  glTranslatef (1.0, 0.0, 0.0);
-  glPushMatrix();
-  glScalef (2.0, 0.4, 1.0);
-  glutWireCube (1.0);
-  glPopMatrix();
+   if( x > (WIDTH/2) )
+   {
+	   rotX = x;
+	   rotY = y;
+	   rotAng -= 1;
 
-  /* origem volta para o sistema de coordenadas original */
-  glPopMatrix();
-  glutSwapBuffers();
+   } else {
+	   rotX = x;
+	   rotY = y;
+	   rotAng += 1;
+   }
+
+       parametrosVisualizacao();
+       glutPostRedisplay();
 }
 
-void reshape (int w, int h){
-  glViewport (0, 0, (GLsizei) w, (GLsizei) h);
-  glMatrixMode (GL_PROJECTION);
-  glLoadIdentity ();
-  gluPerspective(65.0, (GLfloat) w/(GLfloat) h, 1.0, 20.0);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  glTranslatef (0.0, 0.0, -5.0);
-}
+int main( int  argc, char* argv[] ) 
+{
+	glutInit( &argc, argv );
+	/*
+	 * 	GLUT_DOUBLE: a frequencia de apresentação não prejudique sua apresentação .. s
+	 *  GLUT_SINGLE: acabamos vendo quadro a quadro
+	 *  GLUT_RGB: Define a cor que será trabalhada
+	 *  GLUT_DEPTH: configura o ambiente para representar animação com noção de profundidade
+	 *  GLUT_STENCIL: habilita o gerenciamento de eliminação de superfície escondidas ..
+			considera o ponto de vista do observador e o que está na frente pode ser visto, enquanto o que está atrás é eliminado. 
+	 */
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
+	glutInitWindowSize( WIDTH , HEIGHT );
+	glutInitWindowPosition( 100 , 100 );
 
-void keyboard (unsigned char key, int x, int y){
-  switch (key) {
-  case 'e':
-    shoulder = (shoulder + 5) % 360;
-    glutPostRedisplay();
-    break;
-  case 'q':
-    shoulder = (shoulder - 5) % 360;
-    glutPostRedisplay();
-    break;
-  case 'd':
-    elbow = (elbow + 5) % 360;
-    glutPostRedisplay();
-    break;
-  case 'a':
-    elbow = (elbow - 5) % 360;
-    glutPostRedisplay();
-    break;
-  case 27:
-    exit(0);
-    break;
-  default:
-    break;
-  }
-}
+	if( (window=glutCreateWindow("trab - CG")) < 1 )
+	{
+		perror("falha ao cria janela\n");
+		exit(-1);
+	}
+    initGL();
 
-int main(int argc, char** argv){
-  glutInit(&argc, argv);
-  glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB);
-  glutInitWindowSize (500, 500); 
-  glutInitWindowPosition (100, 100);
-  glutCreateWindow (argv[0]);
-  init ();
-  glutDisplayFunc(display); 
-  glutReshapeFunc(reshape);
-  glutKeyboardFunc(keyboard);
-  glutMainLoop();
-  return 0;
+	glutDisplayFunc(desenhaMundo);
+	glutReshapeFunc(redimensionaJanela);
+
+	glutPassiveMotionFunc(mouse);
+    glutKeyboardFunc(tecla);
+    glutSpecialFunc(teclas_especiais);
+
+//	glutIdleFunc(redesenhar);			// funcao chamada sempre que o Loop do GLUT esta ocioso
+
+    glutMainLoop();
 }
