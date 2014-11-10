@@ -11,14 +11,16 @@ void init(void)
 
 void displayObjects(void) 
 {
+   //glCullFace(GL_FRONT);
+   glCullFace(GL_BACK);
    glColor3f(0.0, 0.0, 1.0);
    glPushMatrix ();
    glRotatef (30.0, 1.0, 0.0, 0.0);
    glPushMatrix ();
    glTranslatef (-0.80, 0.35, 0.0); 
    glRotatef (100.0, 1.0, 0.0, 0.0);
-//   glutSolidTorus (0.275, 0.85, 16, 16);
-   glutWireTorus (0.275, 0.85, 16, 16);
+   glutSolidTorus (0.275, 0.85, 16, 16);
+   //glutWireTorus (0.275, 0.85, 16, 16);
    glPopMatrix ();
 
    glColor3f(1.0, 0.0, 0.0);
@@ -26,23 +28,23 @@ void displayObjects(void)
    glTranslatef (-0.75, -0.50, 0.0); 
    glRotatef (10.0, 0.0, 0.0, 1.0);
    glRotatef (10.0, 1.0, 0.0, 0.0);
-//   glutSolidCube (1.5);
-   glutWireCube (1.5);
+   glutSolidCube (1.5);
+   //glutWireCube (1.5);
    glPopMatrix ();
 
    glColor3f(0.0, 1.0, 0.0);
    glPushMatrix ();
    glTranslatef (0.75, 0.60, 0.0); 
    glRotatef (30.0, 1.0, 0.0, 0.0);
-//   glutSolidSphere (1.0, 16, 16);
-   glutWireSphere (1.0, 16, 16);
+   glutSolidSphere (1.0, 16, 16);
+//   glutWireSphere (1.0, 16, 16);
    glPopMatrix ();
 
    glColor3f(1.0, 1.0, 0.0);
    glPushMatrix ();
    glTranslatef (0.70, -0.90, 0.25); 
-//   glutSolidOctahedron ();
-   glutWireOctahedron ();
+   glutSolidOctahedron ();
+//   glutWireOctahedron ();
    glPopMatrix ();
 
    glPopMatrix ();
@@ -71,6 +73,7 @@ void reshape(int w, int h)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   glTranslatef (0.0, 0.0, -5.0);
+
 
 }
 

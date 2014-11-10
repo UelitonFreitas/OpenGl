@@ -1,0 +1,167 @@
+
+/* Copyright (c) Mark J. Kilgard, 1994. */
+
+/* This program is freely distributable without licensing fees 
+   and is provided without guarantee or warrantee expressed or 
+   implied. This program is -not- in the public domain. */
+
+#include <string.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <GL/glut.h>
+//Initialize OpenGL
+void InitGL()
+{
+ glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
+ glShadeModel(GL_SMOOTH);                         
+ glEnable(GL_DEPTH_TEST);                     
+ glDepthFunc(GL_LEQUAL);
+ glClearDepth(1.0f);
+ glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);  
+  
+ glMatrixMode(GL_PROJECTION);
+ glLoadIdentity();
+ gluPerspective(45.0f, (GLfloat)640.0f / (GLfloat) 480.0f, 0.1f,100.0f);
+ glMatrixMode(GL_MODELVIEW);
+ glLoadIdentity();  
+ 
+ 
+}
+
+//Draw function
+void Draw()
+{
+ 
+ //Draw the cube
+ glBegin(GL_QUADS);
+  glVertex3f( 1.0f, 1.0f,-1.0f);          
+  glVertex3f(-1.0f, 1.0f,-1.0f);         
+  glVertex3f(-1.0f, 1.0f, 1.0f);          
+  glVertex3f( 1.0f, 1.0f, 1.0f);
+
+  
+  glVertex3f( 1.0f,-1.0f, 1.0f);         
+  glVertex3f(-1.0f,-1.0f, 1.0f);        
+  glVertex3f(-1.0f,-1.0f,-1.0f);         
+  glVertex3f( 1.0f,-1.0f,-1.0f); 
+   
+ 
+  glVertex3f( 1.0f, 1.0f, 1.0f);          
+  glVertex3f(-1.0f, 1.0f, 1.0f);        
+  glVertex3f(-1.0f,-1.0f, 1.0f);          
+  glVertex3f( 1.0f,-1.0f, 1.0f);  
+  
+ 
+  glVertex3f( 1.0f,-1.0f,-1.0f);         
+  glVertex3f(-1.0f,-1.0f,-1.0f);          
+  glVertex3f(-1.0f, 1.0f,-1.0f);         
+  glVertex3f( 1.0f, 1.0f,-1.0f);
+  
+  
+  glVertex3f(-1.0f, 1.0f, 1.0f);          
+  glVertex3f(-1.0f, 1.0f,-1.0f);          
+  glVertex3f(-1.0f,-1.0f,-1.0f);          
+  glVertex3f(-1.0f,-1.0f, 1.0f);   
+  
+  
+        glVertex3f( 1.0f, 1.0f,-1.0f);          
+        glVertex3f( 1.0f, 1.0f, 1.0f);          
+        glVertex3f( 1.0f,-1.0f, 1.0f);  
+        glVertex3f( 1.0f,-1.0f,-1.0f);  
+    glEnd();
+     
+    
+    SDL_GL_SwapBuffers();
+}
+
+//Udate function
+void Update()
+{
+ glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+ glLoadIdentity();
+ 
+ //Move back in the -z axis to see the full cube
+ glTranslatef(0.0,0.0,-7.0);
+ 
+ //Rotate the cube 30 pixels in the y axis
+ glRotatef(30.0, 0.0, 1.0, 0.0);
+}
+
+int main(int argc, char *argv[])
+{
+ //Init SDL
+ SDL_Init(SDL_INIT_EVERYTHING);
+ SDL_Surface *Screen;
+ SDL_Event   Event;
+ Screen = SDL_SetVideoMode(640,480,32, SDL_SWSURFACE | SDL_OPENGL);
+ 
+ //Go to opengl init function
+ InitGL();
+ 
+ bool Running = true;
+ bool culling = false;
+ bool wireframe = false;
+ 
+ //Enter the main loop and dont exit until running = false
+ while(Running)
+ {
+  while(SDL_PollEvent(&Event))
+  {
+   switch(Event.type)
+   {
+    case SDL_QUIT:
+     Running = false;
+     break;
+     
+    case SDL_KEYDOWN:{
+     //SDL functions for key handling
+        Uint8* state=SDL_GetKeyState(NULL);
+        if(state[SDLK_ESCAPE])
+                    {
+      Running = false;
+      break;
+                    }
+                    
+                    if(state[SDLK_w])
+                    {
+      if(wireframe == false){
+       glPolygonMode(GL_FRONT, GL_LINE);
+       glPolygonMode(GL_BACK, GL_LINE);
+       wireframe = true;
+       }
+       else{
+       glPolygonMode(GL_FRONT, GL_FILL);
+       glPolygonMode(GL_BACK, GL_FILL);
+       wireframe = false;
+       }
+      break;
+                    }
+                    
+                    if(state[SDLK_c])
+                    {
+      if(culling == false)
+      {
+       //Enable face culling
+       glEnable(GL_CULL_FACE);
+       glFrontFace(GL_CCW);
+       culling = true;
+         }
+         else
+         {
+       //Disable face culling
+       glDisable(GL_CULL_FACE);
+       culling = false;
+      }
+      break;
+                    }
+                }
+   }
+  }
+  //Afer polling events update and draw objects onto the screen
+  Update();
+  Draw();
+ }
+ 
+ SDL_Quit();
+ return 0;
+}
